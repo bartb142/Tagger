@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the codebase so changes reflect immediately without rebuild
+      - ./app:/app/app
+      # Map the local uploads and static folders
+      - ./uploads:/app/uploads
+      - ./static:/app/static
+      # Map the SQLite database directory to a named volume to persist between restarts safely
+      - db_data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+
+volumes:
+  db_data:
