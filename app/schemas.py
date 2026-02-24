@@ -33,6 +33,10 @@ class ItemBase(BaseModel):
 class ItemCreate(ItemBase):
     tags: List[str] = []
 
+class ItemUpdate(BaseModel):
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+
 class Item(ItemBase):
     id: int
     tags: List[Tag] = []

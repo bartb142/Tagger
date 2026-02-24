@@ -26,8 +26,7 @@
         <!-- Header -->
         <header class="flex justify-between items-center mb-10 pb-6 border-b border-gray-200">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">我的收藏</h1>
-                <p class="text-sm text-gray-500 mt-1">管理並追蹤您的物品</p>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">收藏清單</h1>
             </div>
             <button id="addItemBtn"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
@@ -157,6 +156,59 @@
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center min-w-[100px]">
                                 <span>儲存物品</span>
                                 <span id="submitSpinner"
+                                    class="hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Edit Item Modal -->
+    <div id="editItemModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden z-50 overflow-y-auto">
+        <div class="min-h-screen px-4 text-center flex flex-col items-center justify-center">
+            <div
+                class="inline-block w-full max-w-lg my-8 text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl relative">
+                <div class="px-6 py-6 sm:p-8">
+                    <div class="flex justify-between items-center mb-5">
+                        <h3 class="text-2xl font-semibold text-gray-900">編輯物品</h3>
+                        <button id="closeEditModalBtn" class="text-gray-400 hover:text-gray-500 transition-colors">
+                            <span class="sr-only">關閉</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="editItemForm" class="space-y-5">
+                        <input type="hidden" id="editItemId" name="id">
+                        <div>
+                            <label for="editItemDescription"
+                                class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                            <textarea id="editItemDescription" name="description" rows="3"
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 transition-colors"></textarea>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm font-medium text-gray-700">標籤</label>
+                                <a href="/tags"
+                                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">管理標籤</a>
+                            </div>
+                            <div id="editTagPillsContainer"
+                                class="flex flex-wrap gap-2 p-3 bg-gray-50 border border-gray-300 rounded-lg min-h-[50px] max-h-[150px] overflow-y-auto">
+                                <!-- Tag pills populated here -->
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-5 flex justify-end gap-3 border-t border-gray-200">
+                            <button type="button" id="cancelEditModalBtn"
+                                class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">取消</button>
+                            <button type="submit" id="submitEditBtn"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center min-w-[100px]">
+                                <span>儲存變更</span>
+                                <span id="submitEditSpinner"
                                     class="hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                             </button>
                         </div>

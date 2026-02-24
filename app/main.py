@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import os
 import shutil
 import uuid
+import json
 
 from . import models, schemas, database
 
@@ -104,11 +105,46 @@ def read_item(item_id: int, db: Session = Depends(database.get_db)):
         raise HTTPException(status_code=404, detail="Item not found")
     return item
 
+@app.put("/api/items/{item_id}", response_model=schemas.Item)
+def update_item(item_id: int, item_update: schemas.ItemUpdate, db: Session = Depends(database.get_db)):
+    db_item = db.query(models.Item).filter(models.Item.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    if item_update.description is not None:
+        db_item.description = item_update.description
+        
+    if item_update.tags is not None:
+        db_item.tags = []
+        for t_name in item_update.tags:
+            t_name = t_name.strip()
+            if not t_name: continue
+            tag = db.query(models.Tag).filter(models.Tag.name == t_name).first()
+            if not tag:
+                tag = models.Tag(name=t_name)
+                db.add(tag)
+                db.commit()
+                db.refresh(tag)
+            db_item.tags.append(tag)
+            
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
 @app.delete("/api/items/{item_id}")
 def delete_item(item_id: int, db: Session = Depends(database.get_db)):
     item = db.query(models.Item).filter(models.Item.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+        
+    for photo in item.photos:
+        file_path_on_disk = photo.file_path.lstrip("/")
+        if os.path.exists(file_path_on_disk):
+            try:
+                os.remove(file_path_on_disk)
+            except Exception as e:
+                print(f"Error deleting file {file_path_on_disk}: {e}")
+                
     db.delete(item)
     db.commit()
     return {"ok": True}
@@ -137,3 +173,64 @@ def upload_photos(item_id: int, files: List[UploadFile] = File(...), db: Session
         db.refresh(p)
         
     return photos
+
+@app.post("/api/items/batch", response_model=List[schemas.Item])
+def create_batch_items(
+    description: Optional[str] = Form(""),
+    tags_json: Optional[str] = Form("[]"),
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(database.get_db)
+):
+    try:
+        tag_names = json.loads(tags_json)
+    except Exception:
+        tag_names = []
+
+    # Pre-fetch or create tags
+    resolved_tags = []
+    for t_name in tag_names:
+        t_name = t_name.strip()
+        if not t_name: continue
+        tag = db.query(models.Tag).filter(models.Tag.name == t_name).first()
+        if not tag:
+            tag = models.Tag(name=t_name)
+            db.add(tag)
+            db.commit()
+            db.refresh(tag)
+        resolved_tags.append(tag)
+
+    import datetime
+    base_name = f"未命名物品 ({datetime.datetime.now().strftime('%Y/%m/%d')})"
+
+    created_items = []
+    
+    for file in files:
+        # Create the item for this file
+        item_name = file.filename if file.filename else base_name
+        db_item = models.Item(name=item_name, description=description)
+        for tag in resolved_tags:
+            db_item.tags.append(tag)
+        
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item)
+        
+        # Save the file and associate it
+        ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+        filename = f"{uuid.uuid4()}.{ext}"
+        filepath = os.path.join("uploads", filename)
+        
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        photo = models.Photo(file_path=f"/uploads/{filename}", item_id=db_item.id)
+        db.add(photo)
+        db.commit()
+        db.refresh(photo)
+        
+        created_items.append(db_item)
+        
+    for item in created_items:
+        db.refresh(item)
+        
+    return created_items

@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submitBtn');
     const submitSpinner = document.getElementById('submitSpinner');
 
+    const editItemModal = document.getElementById('editItemModal');
+    const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+    const cancelEditModalBtn = document.getElementById('cancelEditModalBtn');
+    const editItemForm = document.getElementById('editItemForm');
+    const submitEditBtn = document.getElementById('submitEditBtn');
+    const submitEditSpinner = document.getElementById('submitEditSpinner');
+    const editTagPillsContainer = document.getElementById('editTagPillsContainer');
+    let editSelectedTags = new Set();
+
     // Tag UI Elements
     const tagPillsContainer = document.getElementById('tagPillsContainer');
 
@@ -108,6 +117,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function renderEditModalTagPills() {
+        editTagPillsContainer.innerHTML = '';
+        if (tags.length === 0) {
+            editTagPillsContainer.innerHTML = '<span class="text-sm text-gray-500 p-2">沒有可用的標籤，請先至「標籤管理」頁面新增標籤。</span>';
+            return;
+        }
+
+        tags.forEach(tag => {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            const isSelected = editSelectedTags.has(tag.name);
+            pill.className = `px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1.5 ${isSelected
+                ? 'bg-gray-100 border-gray-300 text-gray-900 ring-1 ring-gray-400'
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`;
+            pill.innerHTML = `<span class="w-2 h-2 rounded-full shadow-inner" style="background-color: ${tag.color || '#4f46e5'}"></span><span>${tag.name}</span>`;
+            pill.onclick = () => toggleEditTag(tag.name, pill);
+            editTagPillsContainer.appendChild(pill);
+        });
+    }
+
+    function toggleEditTag(tagName, pillElement) {
+        if (editSelectedTags.has(tagName)) {
+            editSelectedTags.delete(tagName);
+            pillElement.className = 'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1.5 bg-white border-gray-200 text-gray-600 hover:bg-gray-50';
+        } else {
+            editSelectedTags.add(tagName);
+            pillElement.className = 'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1.5 bg-gray-100 border-gray-300 text-gray-900 ring-1 ring-gray-400';
+        }
+    }
+
     function renderGallery() {
         galleryGrid.innerHTML = '';
 
@@ -157,12 +197,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="p-5 flex-1 flex flex-col">
                 <p class="text-sm text-gray-500 mb-4 flex-1 line-clamp-2">${item.description || '沒有描述'}</p>
                 <div class="flex flex-wrap gap-1 mt-auto pt-4 border-t border-gray-100 items-center justify-between">
-                    <div class="flex flex-wrap gap-1 w-[80%]">${tagsHtml}</div>
-                    <button type="button" onclick="deleteItem(${item.id})" class="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-red-50 focus:outline-none" title="刪除物品">
-                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                         </svg>
-                    </button>
+                    <div class="flex flex-wrap gap-1 w-[70%]">${tagsHtml}</div>
+                    <div class="flex">
+                        <button type="button" onclick="openEditModal(${item.id})" class="text-gray-400 hover:text-indigo-600 transition-colors p-1.5 rounded-md hover:bg-indigo-50 focus:outline-none mr-1" title="編輯物品">
+                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                             </svg>
+                        </button>
+                        <button type="button" onclick="deleteItem(${item.id})" class="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-red-50 focus:outline-none" title="刪除物品">
+                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                             </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -187,9 +234,34 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFileListUI();
     };
 
+    const closeEditModal = () => {
+        editItemModal.classList.add('hidden');
+        document.body.style.overflow = '';
+        editItemForm.reset();
+        editSelectedTags.clear();
+    };
+
+    window.openEditModal = (id) => {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+
+        document.getElementById('editItemId').value = item.id;
+        document.getElementById('editItemDescription').value = item.description || '';
+
+        editSelectedTags.clear();
+        item.tags.forEach(t => editSelectedTags.add(t.name));
+        renderEditModalTagPills();
+
+        editItemModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    };
+
     addItemBtn.addEventListener('click', openModal);
     closeModalBtn.addEventListener('click', closeModal);
     cancelModalBtn.addEventListener('click', closeModal);
+
+    closeEditModalBtn.addEventListener('click', closeEditModal);
+    cancelEditModalBtn.addEventListener('click', closeEditModal);
 
     // Delete Item
     window.deleteItem = async (id) => {
@@ -295,34 +367,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = "未命名物品 (" + new Date().toLocaleDateString() + ")";
             const description = document.getElementById('itemDescription').value;
 
-            const itemPayload = {
-                name: name,
-                description: description,
-                tags: Array.from(selectedTags)
-            };
+            // Prepare formData for batch upload
+            const formData = new FormData();
+            formData.append('description', description);
+            formData.append('tags_json', JSON.stringify(Array.from(selectedTags)));
 
-            const itemRes = await fetch('/api/items', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(itemPayload)
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
             });
 
-            if (!itemRes.ok) throw new Error('新增物品失敗');
-            const createdItem = await itemRes.json();
+            const uploadRes = await fetch('/api/items/batch', {
+                method: 'POST',
+                body: formData
+            });
 
-            if (selectedFiles.length > 0) {
-                const formData = new FormData();
-                selectedFiles.forEach(file => {
-                    formData.append('files', file);
-                });
-
-                const uploadRes = await fetch(`/api/items/${createdItem.id}/photos`, {
-                    method: 'POST',
-                    body: formData // Content-Type is set automatically by fetch when using FormData
-                });
-
-                if (!uploadRes.ok) throw new Error('照片上傳失敗');
-            }
+            if (!uploadRes.ok) throw new Error('新增物品與照片失敗');
 
             closeModal();
             await init();
@@ -335,6 +394,47 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.querySelector('span:nth-child(1)').textContent = '儲存物品';
             submitSpinner.classList.add('hidden');
             submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+    });
+
+    editItemForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        submitEditBtn.disabled = true;
+        submitEditBtn.querySelector('span:nth-child(1)').textContent = '儲存中...';
+        submitEditSpinner.classList.remove('hidden');
+        submitEditBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+        try {
+            const id = document.getElementById('editItemId').value;
+            const description = document.getElementById('editItemDescription').value;
+            const tagsList = Array.from(editSelectedTags);
+
+            const res = await fetch(`/api/items/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: description,
+                    tags: tagsList
+                })
+            });
+
+            if (!res.ok) throw new Error('修改物品失敗');
+
+            closeEditModal();
+            await fetchItems();
+            renderGallery();
+
+        } catch (error) {
+            console.error('Edit Submission Error:', error);
+            alert('修改物品時發生錯誤。');
+        } finally {
+            submitEditBtn.disabled = false;
+            submitEditBtn.querySelector('span:nth-child(1)').textContent = '儲存變更';
+            submitEditSpinner.classList.add('hidden');
+            submitEditBtn.classList.remove('opacity-75', 'cursor-not-allowed');
         }
     });
 
