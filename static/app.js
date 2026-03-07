@@ -76,15 +76,32 @@ document.addEventListener('DOMContentLoaded', () => {
             pill.onclick = () => {
                 if (activeFilters.has(tag.name)) {
                     activeFilters.delete(tag.name);
-                    pill.className = `px-3 py-1.5 rounded-full text-sm font-medium border transition-colors flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50`;
                 } else {
                     activeFilters.add(tag.name);
-                    pill.className = `px-3 py-1.5 rounded-full text-sm font-medium border transition-colors flex items-center gap-2 bg-indigo-50 border-indigo-200 text-indigo-800 ring-1 ring-indigo-500`;
                 }
+                renderFilterTags();
                 renderGallery();
             };
             filterPillsContainer.appendChild(pill);
         });
+
+        if (activeFilters.size > 0) {
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 transition-colors flex items-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 ml-1.5 shadow-sm';
+            clearBtn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>清除所有篩選</span>
+            `;
+            clearBtn.onclick = () => {
+                activeFilters.clear();
+                renderFilterTags();
+                renderGallery();
+            };
+            filterPillsContainer.appendChild(clearBtn);
+        }
     }
 
     function renderModalTagPills() {
