@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const galleryGrid = document.getElementById('galleryGrid');
     const emptyState = document.getElementById('emptyState');
     const filterPillsContainer = document.getElementById('filterPillsContainer');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
     const addItemBtn = document.getElementById('addItemBtn');
     const addItemModal = document.getElementById('addItemModal');
     const closeModalBtn = document.getElementById('closeModalBtn');
@@ -86,21 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (activeFilters.size > 0) {
-            const clearBtn = document.createElement('button');
-            clearBtn.type = 'button';
-            clearBtn.className = 'px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 transition-colors flex items-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 ml-1.5 shadow-sm';
-            clearBtn.innerHTML = `
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>清除所有篩選</span>
-            `;
-            clearBtn.onclick = () => {
-                activeFilters.clear();
-                renderFilterTags();
-                renderGallery();
-            };
-            filterPillsContainer.appendChild(clearBtn);
+            clearFiltersBtn.classList.remove('hidden');
+        } else {
+            clearFiltersBtn.classList.add('hidden');
         }
     }
 
@@ -279,6 +268,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeEditModalBtn.addEventListener('click', closeEditModal);
     cancelEditModalBtn.addEventListener('click', closeEditModal);
+
+    clearFiltersBtn.addEventListener('click', () => {
+        activeFilters.clear();
+        renderFilterTags();
+        renderGallery();
+    });
 
     // Delete Item
     window.deleteItem = async (id) => {
