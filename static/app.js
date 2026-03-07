@@ -187,8 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ).join('');
 
         div.innerHTML = `
-            <div class="relative w-full h-48 overflow-hidden bg-gray-100">
-                <img src="${coverPhoto}" alt="${item.name}" class="w-full h-full object-cover">
+            <div class="relative w-full min-h-[100px] overflow-hidden bg-gray-100">
+                <img src="${coverPhoto}" alt="${item.name}" class="w-full h-auto object-cover">
                 ${item.photos && item.photos.length > 1 ?
                 `<div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md mb-0">
                       +${item.photos.length - 1} 更多
